@@ -64,13 +64,7 @@ const SettingsScreen: React.FC = () => {
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Settings</ThemedText>
       </ThemedView>
-      <View
-        style={[
-          styles.container,
-          isDarkMode ? styles.darkBackground : styles.lightBackground,
-        ]}
-      >
-        <Text style={styles.title}>Settings</Text>
+      <View>
 
         <View style={styles.settingItem}>
           <Text style={styles.label}>Dark Mode</Text>
@@ -128,6 +122,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 18,
+    color: "#fff",
   },
   resetButton: {
     marginTop: 20,
@@ -143,7 +138,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     marginTop: 20,
-    backgroundColor: "#007AFF",
+    backgroundColor: "#FF9C01",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",

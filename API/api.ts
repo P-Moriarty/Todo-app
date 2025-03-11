@@ -1,10 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-const API_URL = "https://e2ff-102-89-82-105.ngrok-free.app";
+const API_URL = "https://22b4-102-89-82-200.ngrok-free.app";
 
 export interface LoginResponse {
-  token: string;
+  access_token: string;
   user: {
     id: number;
     name: string;
@@ -23,12 +23,20 @@ export const login = async (
       },
       body: JSON.stringify({ email, password }),
     });
+    const data: LoginResponse = await response.json();
+    console.log("API Response Data:", data);
 
     if (!response.ok) {
       throw new Error("Invalid login credentials");
     }
 
-    const data: LoginResponse = await response.json();
+    if (!data.access_token) {
+      throw new Error("Token is missing in response");
+    }
+
+    await AsyncStorage.setItem("access_token", data.access_token);
+    console.log("Token successfully stored:", data.access_token); 
+
     return data;
   } catch (error) {
     throw error;
@@ -36,14 +44,14 @@ export const login = async (
 };
 
 export interface SignupResponse {
-  message: string; 
+  message: string;
 }
 
 export const signup = async (
   email: string,
   password: string,
-  firstName: string,
-  lastName: string
+  first_name: string,
+  last_name: string
 ): Promise<SignupResponse> => {
   try {
     const response = await fetch(`${API_URL}/auth/api/v1/signup`, {
@@ -51,7 +59,7 @@ export const signup = async (
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password, firstName, lastName }),
+      body: JSON.stringify({ email, password, first_name, last_name }),
     });
 
     if (!response.ok) {
@@ -68,78 +76,87 @@ export const signup = async (
 
 //Fetch User Data API Call
 export const fetchUserData = async (): Promise<any> => {
+  const accessToken = await AsyncStorage.getItem("access_token");
+  console.log("Access Token:", accessToken);
   try {
     const response = await fetch(`${API_URL}/auth/api/v1/profile`, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json"
-      }
-    })
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log("Response status:", response);
 
     if (!response.ok) {
-      throw new Error("Failed to fetch user data")
+      throw new Error("Failed to fetch user data");
     }
 
-    const data = await response.json()
-    return data
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error("Error fetching user data:", error)
-    throw error
+    console.error("Error fetching user data:", error);
+    throw error;
   }
-}
+};
 
 //Logout API Call
 export const logout = async (): Promise<void> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/api/v1/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Include any necessary authorization headers if required
-          // Authorization: `Bearer ${yourAuthToken}`,
-        },
-      });
-      await AsyncStorage.removeItem("userData");
-  
-      if (!response.ok) {
-        throw new Error("Failed to log out");
-      }
-  
-      // Optionally clear local storage or tokens
-      // localStorage.removeItem("authToken");
-    } catch (error) {
-      console.error("Logout error:", error);
-      throw error;
+  const accessToken = await AsyncStorage.getItem("access_token");
+  console.log("Access Token:", accessToken);
+  try {
+    const response = await fetch(`${API_URL}/auth/api/v1/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log("Response status:", response);
+    await AsyncStorage.removeItem("access_token");
+
+    if (!response.ok) {
+      throw new Error("Failed to log out");
     }
-  };
-  
+
+    // Optionally clear local storage or tokens
+    // localStorage.removeItem("authToken");
+  } catch (error) {
+    console.error("Logout error:", error);
+    throw error;
+  }
+};
 
 // Add Todo API Call
-export const saveTodoToApi = async (taskTitle: string, taskDescription: string, userId: number): Promise<any> => {
-    try {
-      const token = await AsyncStorage.getItem("userToken"); // Retrieve the token
-      if (!token) {
-        throw new Error("Authentication token is missing.");
-      }
-  
-      const response = await axios.post(
-        `${API_URL}/todos/api/v1/create`,
-        { title: taskTitle, description: taskDescription, userId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Attach the token here
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Failed to save the task to the API:", error);
-      throw error; // Re-throw to handle it in the caller
+export const saveTodoToApi = async (
+  taskTitle: string,
+  taskDescription: string,
+  userId: number
+): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem("userToken"); // Retrieve the token
+    if (!token) {
+      throw new Error("Authentication token is missing.");
     }
-  };
-  
 
-  // Update Todo API Call
+    const response = await axios.post(
+      `${API_URL}/todos/api/v1/create`,
+      { title: taskTitle, description: taskDescription, userId },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach the token here
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to save the task to the API:", error);
+    throw error; // Re-throw to handle it in the caller
+  }
+};
+
+// Update Todo API Call
 export interface Todo {
   id: number;
   title: string;

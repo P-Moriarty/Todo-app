@@ -8,7 +8,7 @@ import { fetchUserData } from "@/API/api";
 
 // Define types for the user data
 interface UserData {
-  name: string;
+  first_name: string;
   email: string;
   username: string;
 }
@@ -20,21 +20,24 @@ export default function HomeScreen() {
 
   // Fetch user data
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true); // Start loading
-      setError(null); // Clear previous errors
+    const fetchUser = async () => {
+      setLoading(true);
+      setError(null);
 
       try {
-        const response = await fetchUserData(); // Pass fetchUserData
-
-        setUserData(response as unknown as UserData); // Set fetched data to state
+        const response = await fetchUserData()
+        console.log("Fetched User Data:", response); // Debugging
+        setUserData(response); // Store user data
+        console.log("User Data:", userData); // Debugging
       } catch (err) {
-        setError("Failed to fetch user data"); // Set error message
+        setError("Failed to fetch user data");
       } finally {
-        setLoading(false); // End loading
+        setLoading(false);
       }
     };
-  }, []); // Run once on mount
+
+    fetchUser();
+  }, []);
 
   return (
     <ParallaxScrollView
@@ -48,10 +51,9 @@ export default function HomeScreen() {
     >
       <ThemedView style={styles.titleContainer}>
         {/* User Data Section */}
-        {loading ? (
+        {userData && loading ? (
           <ThemedView style={styles.centered}>
-            <ActivityIndicator size="large" color="#0000ff" />
-            <ThemedText>Loading user data...</ThemedText>
+            <ActivityIndicator size="large" color="#FF9C01" />
           </ThemedView>
         ) : error ? (
           <ThemedView style={styles.centered}>
@@ -59,13 +61,13 @@ export default function HomeScreen() {
           </ThemedView>
         ) : userData ? (
           <ThemedView style={styles.userInfoContainer}>
-            <ThemedText type="title">Welcome! {userData.name}</ThemedText>
             <HelloWave />
+            <ThemedText type="title">Welcome! {userData.first_name}</ThemedText>
           </ThemedView>
         ) : (
           <ThemedView style={styles.centered}>
-            <ThemedText>No user data available</ThemedText>
-          </ThemedView>
+          <ActivityIndicator size="large" color="#FF9C01" />
+        </ThemedView>
         )}
       </ThemedView>
 
@@ -101,6 +103,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   userInfoContainer: {
+    flex: 1,
     gap: 8,
     fontSize: 16,
     justifyContent: "center",
